@@ -58,6 +58,48 @@ license-policy gating for render pipelines. The private reference
 implementation is gftdcojp's `ongakuka` catalog (ADR-2607023000: コードは
 kotoba-lang、職能は cloud-itonami-isco、商売は gftdcojp).
 
+## Reference actor (`:maturity :implemented`)
+
+Like [`cloud-itonami-isco-6130`](https://github.com/cloud-itonami/cloud-itonami-isco-6130),
+this repository implements the **full itonami Actor pattern**: a real
+[`kotoba-lang/langgraph`](https://github.com/kotoba-lang/langgraph)
+`StateGraph` with the Advisor and Governor as distinct graph nodes and
+human-in-the-loop interrupt/resume via checkpointing. It is the first
+reference actor whose governor core is a kotoba-lang **craft lib**: the
+license-policy gate is [`ongaku.policy`](https://github.com/kotoba-lang/ongaku)
+— the same gate the private gftd catalog uses (ADR-2607023000).
+
+```text
+:intake -> :advise -> :govern -> :decide -+-> :commit            (:ok? true)
+                                           +-> :request-approval   (:escalate? true, interrupt-before)
+                                           +-> :hold               (:hard? true)
+```
+
+- `src/music_practice/store.cljc` — `Store` protocol + `MemStore`:
+  registered catalog tracks (each track map IS an ongaku catalog asset with
+  its license policy flags), committed records, an append-only audit ledger.
+- `src/music_practice/advisor.cljc` — `Advisor` protocol; `mock-advisor`
+  (deterministic, default) proposes a music operation from a request;
+  `llm-advisor` wraps a `langchain.model/ChatModel` — either way the advisor
+  only ever produces a `:propose`-effect proposal, and LLM parse failures
+  always yield `confidence 0.0` (forces escalation, never fabricated
+  confidence).
+- `src/music_practice/governor.cljc` — `MusicGovernor/check`: a pure
+  function, wired as its own `:govern` node. Hard invariants (unregistered
+  track, a proposal whose `:effect` isn't `:propose`) always route to
+  `:hold`. Escalation invariants (any `ongaku.policy` error — raw public
+  exposure, AI-training use, Content ID registration, unlicensed channel or
+  context — and low confidence) always route to `:request-approval`; the
+  human resume IS the human-signed license.
+- `src/music_practice/actor.cljc` — the StateGraph; committed license
+  records carry the track's credit text and render-only flag.
+
+Run the tests:
+
+```bash
+clojure -M:test
+```
+
 See [`docs/business-model.md`](docs/business-model.md) and
 [`docs/operator-guide.md`](docs/operator-guide.md).
 

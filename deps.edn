@@ -1,0 +1,13 @@
+{:paths ["src"]
+ :deps {io.github.kotoba-lang/langgraph
+        {:git/sha "5b4e5e70837b849b14b6a5800894e3be202ad5fa"}
+        ;; ongaku craft lib (ADR-2607023000) — the Music Governor's license-
+        ;; policy gate IS ongaku.policy (render-only / no raw public access /
+        ;; no AI training / no Content ID without a human-signed license).
+        io.github.kotoba-lang/ongaku
+        {:git/sha "117b4fe178ec4dfda55ea7de18a3fc4cd95a899d"}}
+ :aliases
+ {:test {:extra-paths ["test"]
+         :extra-deps {io.github.cognitect-labs/test-runner
+                      {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
+         :main-opts ["-m" "cognitect.test-runner"]}}}

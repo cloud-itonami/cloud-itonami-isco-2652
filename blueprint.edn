@@ -1,0 +1,11 @@
+{:itonami.blueprint/id "cloud-itonami-isco-2652"
+ :itonami.blueprint/name "Independent Music Practice"
+ :itonami.blueprint/isco-08 "2652"
+ :itonami.blueprint/domain :creative/music
+ :itonami.blueprint/license "AGPL-3.0-or-later"
+ :itonami.blueprint/social-impact [:creative-livelihoods :cultural-expression :data-sovereignty]
+ :itonami.blueprint/governor :music-governor
+ :itonami.blueprint/robotics true
+ :itonami.blueprint/required-technologies [:robotics :identity :forms :dmn :bpmn :audit-ledger]
+ :itonami.blueprint/craft-libraries ["kotoba-lang/ongaku"]
+ :itonami.blueprint/status :public-oss}

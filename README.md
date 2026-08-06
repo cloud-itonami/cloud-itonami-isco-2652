@@ -52,11 +52,30 @@ Resolves via [`kotoba-lang/occupation`](https://github.com/kotoba-lang/occupatio
 - :bpmn
 - :audit-ledger
 
-Craft library (public, kotoba-lang):
-[`ongaku`](https://github.com/kotoba-lang/ongaku) — BGM selection and
-license-policy gating for render pipelines. The private reference
-implementation is gftdcojp's `ongakuka` catalog (ADR-2607023000: コードは
-kotoba-lang、職能は cloud-itonami-isco、商売は gftdcojp).
+Craft libraries (public, kotoba-lang) — ISCO-08 2652 bundles Musicians,
+Singers **and Composers**, so this occupation spans three crafts:
+
+- **選曲 / licensing** — [`ongaku`](https://github.com/kotoba-lang/ongaku):
+  BGM selection and license-policy gating for render pipelines.
+- **作曲（人が書く経路）** — [`kami-ongaku-notation`](https://github.com/kotoba-lang/kami-ongaku-notation)
+  (score IR + MusicXML), [`kami-ongaku-sequencer`](https://github.com/kotoba-lang/kami-ongaku-sequencer)
+  (MIDI/SMF), [`kami-ongaku-project`](https://github.com/kotoba-lang/kami-ongaku-project)
+  (DAW session), plus `-plugin-host` / `-sampler` (ADR-2607121400).
+- **作曲（生成する経路）** — [`composer`](https://github.com/kotoba-lang/composer):
+  the `ai.gftd.ongakuka.*` compose/track/stem/style/generation contract
+  (ADR-2607031510).
+
+The occupation is one; the **business layer is two**, because the revenue
+mechanics differ (ADR-2607023000: コードは kotoba-lang、職能は
+cloud-itonami-isco、商売は -ka repo):
+
+| repo | 商売 | 権利 |
+|---|---|---|
+| [`ongakuka`](https://github.com/cloud-itonami/ongakuka) | 既製 BGM カタログの選定とライセンス運用 | 第三者の音源。原盤権は持たない |
+| [`sakkyokuka`](https://github.com/cloud-itonami/sakkyokuka) | 受注制作 | 原盤権・著作権・出版権を自分が持つ |
+
+ISCO is not split — the same shape as `isco-2651` (painters / sculptors /
+cartoonists) hosting only `mangaka`.
 
 ## Reference actor (`:maturity :implemented`)
 

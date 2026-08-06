@@ -110,6 +110,25 @@ license-policy gate is [`ongaku.policy`](https://github.com/kotoba-lang/ongaku)
   exposure, AI-training use, Content ID registration, unlicensed channel or
   context — and low confidence) always route to `:request-approval`; the
   human resume IS the human-signed license.
+- 受注 gate — request に `:commission` があれば
+  [`ongaku.commission`](https://github.com/kotoba-lang/ongaku) も回す。
+  ISCO-08 2652 は Musicians, Singers **and Composers** なので、gate は
+  **使い方（policy、下流）と渡し方（commission、上流）の両方**を持つ。
+  判定は craft 側にあり、**この職能が決めるのは処分の振り分けだけ**:
+
+  | 問題 | 処分 | なぜ |
+  |---|---|---|
+  | `:not-held` | **hold** | 持っていない権利は署名しても自分のものにならない |
+  | `:exclusive-conflict` | **hold** | 既に渡した独占は署名で取り戻せない |
+  | 構造不備 (`:missing-id` 等) | **hold** | 受注レコードが壊れている。作り直させる |
+  | `:not-producible` | 承認待ち | 採譜を手配すれば譜面は実在しうる |
+  | `:missing-model-id` / `:missing-disclosure` | 承認待ち | 人間が書ける |
+
+  `escalatable-commission-problems` に無い種別はすべて hold —— 未知の問題を
+  黙って承認待ちに流さない。**保有権利と provenance は request ではなく
+  store の track レコードから採る**ので、呼び出し側が「原盤権を持っている」と
+  自己申告することはできない（`commission-gate-test` がこれを実際に試す）。
+  台帳の側は [`cloud-itonami/sakkyokuka`](https://github.com/cloud-itonami/sakkyokuka)。
 - `src/music_practice/actor.cljc` — the StateGraph; committed license
   records carry the track's credit text and render-only flag.
 

@@ -1,11 +1,16 @@
 {:paths ["src"]
  :deps {io.github.kotoba-lang/langgraph
         {:git/sha "5b4e5e70837b849b14b6a5800894e3be202ad5fa"}
-        ;; ongaku craft lib (ADR-2607023000) — the Music Governor's license-
-        ;; policy gate IS ongaku.policy (render-only / no raw public access /
-        ;; no AI training / no Content ID without a human-signed license).
+        ;; ongaku craft lib (ADR-2607023000) — the Music Governor's gates ARE
+        ;; ongaku's, in both directions of ISCO-08 2652:
+        ;;   使い方（下流）ongaku.policy     — render-only / no raw public access /
+        ;;                                    no AI training / no Content ID
+        ;;   渡し方（上流）ongaku.commission — 保有していない権利の譲渡、独占の
+        ;;                                    二重譲渡、作れない納品物の約束
+        ;; どちらも判定は craft 側。hard reject と人間承認の振り分けだけが
+        ;; この職能の判断（music-practice.governor）。
         io.github.kotoba-lang/ongaku
-        {:git/sha "117b4fe178ec4dfda55ea7de18a3fc4cd95a899d"}}
+        {:git/sha "cb88622101057f49e8380ba6b7dab6723d02f964"}}
  :aliases
  {
   ;; clj-kondo from deps (no binary), errors fail CI. Added because this repo

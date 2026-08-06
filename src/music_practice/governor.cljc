@@ -18,16 +18,48 @@
   HARD invariants (:hard? true, ALWAYS :hold, never overridable):
     1. catalog provenance — the request's track must be registered.
     2. no-actuation       — proposal :effect must be :propose.
+    3. 権利の保存 — 受注（`:commission`）が保有していない権利を譲渡しようと
+       している、既発の独占譲渡と衝突している、あるいは受注レコード自体が
+       壊れている。**人間の署名でも覆せない** — 持っていない権利は署名しても
+       自分のものにならないし、既に渡した独占は署名で取り戻せない。
   ESCALATION invariants (:escalate? true, ALWAYS human sign-off):
-    3. any ongaku.policy error — raw public file exposure, AI-training
+    4. any ongaku.policy error — raw public file exposure, AI-training
        use, Content ID/fingerprint registration, an unlicensed channel,
        or a usage context outside the render-only allowance. Automated
        advice can never grant these; a human-signed license can.
-    4. low confidence (< `confidence-floor`)."
+    5. 履行可能性 — 受注が provenance 的に作れない納品物を約束している
+       （純 AI 生成の作品に譜面や MIDI）、または AI 関与作品の model-id /
+       開示文が無い。**これは人間が解ける** — 採譜を別途手配すれば譜面は
+       実在しうるし、開示文は人間が書ける。だから hold ではなく承認待ち。
+    6. low confidence (< `confidence-floor`).
+
+  受注の判定そのものは bespoke ではない: `ongaku.commission/validate`
+  （kotoba-lang `ongaku` craft lib）が問題の vector を返し、**それを hard と
+  escalate のどちらに振るかだけがこの職能の判断**。技芸は事実を返し、職能が
+  処分を決める。
+
+  重要: 受注の保有権利・provenance は **request ではなく store の track
+  レコードから採る**。advisor も呼び出し側も「この作品の原盤権を持っている」
+  と自己申告できない —— 申告できてしまうと権利保存の invariant が意味を失う。"
   (:require [music-practice.store :as store]
-            [ongaku.policy :as policy]))
+            [ongaku.commission :as commission]
+            [ongaku.policy :as policy]
+            [ongaku.work :as work]))
 
 (def confidence-floor 0.6)
+
+;; 受注の問題種別のうち、**人間が解けるものだけ**を列挙する。ここに無い種別は
+;; すべて hard（hold）—— 未知の問題種別を黙って承認待ちに流すより、止めて
+;; 分類を足させる方が安全側に倒れる。ongaku が新しい問題種別を足したときに
+;; 気づけるよう `governor-test/every-known-problem-type-is-classified` が見張る。
+;;
+;; 解ける理由: 採譜を別途手配すれば譜面は実在しうる（:not-producible）、
+;; 開示文と model-id は人間が書ける（:missing-disclosure / :missing-model-id）。
+;; 解けない理由: 持っていない権利は署名しても自分のものにならず（:not-held）、
+;; 既に渡した独占は署名で取り戻せない（:exclusive-conflict）。構造不備
+;; （:missing-id 等）は受注レコードが壊れているので作り直させる。
+(def escalatable-commission-problems
+  #{:not-producible :missing-model-id :missing-disclosure})
 
 (defn- hard-violations [{:keys [request proposal]} track-record]
   (cond-> []
@@ -37,14 +69,60 @@
     (not= :propose (:effect proposal))
     (conj {:rule :no-actuation :detail "effect は :propose のみ許可（直接書込禁止）"})))
 
+;; --- 受注 ------------------------------------------------------------------
+
+(defn- track->work
+  "store の track レコードから `ongaku.work/work` を組む。
+
+  保有権利も provenance も **track レコードが正本**で、request からは採らない。
+  そうしないと呼び出し側が「原盤権を持っている」と自己申告できてしまい、
+  権利保存の invariant が空文になる。"
+  [track-record]
+  (work/work {:id (:asset/id track-record)
+              :title (:asset/title track-record)
+              :provenance (or (:work/provenance track-record) :authored)
+              :model-id (:work/model-id track-record)
+              :disclosure (:work/disclosure track-record)
+              :held-rights (:work/held-rights track-record)}))
+
+(defn- existing-grants
+  "この track について既に commit 済みの譲渡。独占の二重譲渡の検査に渡す。"
+  [store track-id]
+  (into [] (keep :right) (store/records-of store track-id)))
+
+(defn commission-problems
+  "受注が付いていれば `ongaku.commission/validate` を回して問題を返す。
+  受注が無ければ `nil`。"
+  [request track-record store]
+  (when-let [c (:commission request)]
+    (when track-record
+      (commission/validate
+       (commission/commission (assoc c :work (track->work track-record)))
+       (existing-grants store (:track-id request))))))
+
 (defn check
   "Assess a proposal against `request`/`context`/`proposal` and a `store`
   implementing `music-practice.store/Store`. Returns
-  `{:ok? bool :violations [...] :policy-errors [...] :confidence n
-    :hard? bool :escalate? bool}`."
+  `{:ok? bool :violations [...] :policy-errors [...] :commission-problems [...]
+    :confidence n :hard? bool :escalate? bool}`.
+
+  `request` に `:commission` があれば受注も検査する（`ongaku.commission`）。
+  問題は `hard-commission-problems` / `escalatable-commission-problems` で
+  hold と承認待ちに振り分ける。未知の問題種別は **hard 側に倒す** —— 分類を
+  知らない問題を黙って通すより、止めて分類を足させる方が安全側。"
   [request _context proposal store]
   (let [track-record (store/track store (:track-id request))
-        hard (hard-violations {:request request :proposal proposal} track-record)
+        base-hard (hard-violations {:request request :proposal proposal} track-record)
+        comm-problems (vec (commission-problems request track-record store))
+        comm-escalate (filterv #(escalatable-commission-problems (:problem/type %))
+                               comm-problems)
+        ;; escalate 集合に無いものは全部 hard（未知の種別を含む）
+        comm-hard (filterv #(not (escalatable-commission-problems (:problem/type %)))
+                           comm-problems)
+        hard (into base-hard
+                   (map (fn [p] {:rule (:problem/type p)
+                                 :detail (or (:problem/message p) (pr-str p))}))
+                   comm-hard)
         hard? (boolean (seq hard))
         policy-errs (when track-record
                       (policy/policy-errors
@@ -57,10 +135,12 @@
                         :content-id? (:content-id? request)}))
         conf (or (:confidence proposal) 0.0)
         low? (< conf confidence-floor)
-        risky? (boolean (seq policy-errs))]
-    {:ok? (and (not hard?) (not low?) (not risky?))
+        risky? (boolean (seq policy-errs))
+        unfulfillable? (boolean (seq comm-escalate))]
+    {:ok? (and (not hard?) (not low?) (not risky?) (not unfulfillable?))
      :violations hard
      :policy-errors (vec (or policy-errs []))
+     :commission-problems comm-problems
      :confidence conf
      :hard? hard?
-     :escalate? (and (not hard?) (or low? risky?))}))
+     :escalate? (and (not hard?) (or low? risky? unfulfillable?))}))

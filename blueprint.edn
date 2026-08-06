@@ -23,14 +23,21 @@
  ;; （painters/sculptors/cartoonists）に対して mangaka だけが立っているのと同じ形。
  ;; jsic-3914 は単数の :business-layer を使っているが、ここは実際に複数なので
  ;; 複数形の key にしてある（2026-08-06 時点でどちらの key にも consumer は無い）。
+ ;; 分かれ目は音源の出所ではなく商売の単位。ongakuka も音を作る（path B の
+ ;; AI generation coscientist / MusicGen）—— 違うのは、作った音を自分の
+ ;; カタログに積むのか、依頼主に権利ごと渡すのか。**保有権利は repo 単位では
+ ;; なく資産・作品単位の事実**なので、どちらの台帳も資産ごとにそれを持つ。
  :itonami.blueprint/business-layers
  [{:repo "cloud-itonami/ongakuka"
-   :scope "既製 BGM カタログの選定とライセンス運用。原資は他人の音源で、原盤権は持たない"
-   :craft ["kotoba-lang/ongaku"]}
+   :scope "カタログの運用。既製の調達（path A）と自前生成（path B）の両方を積み、1曲を選んで使わせる"
+   :craft ["kotoba-lang/ongaku"]
+   :ledger "resources/catalog.edn"}
   {:repo "cloud-itonami/sakkyokuka"
-   :scope "受注制作。原盤権・著作権・出版権を自分が持ち、権利と納品物を定めて渡す"
-   :craft ["kotoba-lang/kami-ongaku-notation"
+   :scope "受注制作。依頼1件を受けて作り、作品ごとの保有権利を台帳に持ち、譲渡と納品を検査して渡す"
+   :craft ["kotoba-lang/ongaku"
+           "kotoba-lang/kami-ongaku-notation"
            "kotoba-lang/kami-ongaku-sequencer"
            "kotoba-lang/kami-ongaku-project"
-           "kotoba-lang/composer"]}]
+           "kotoba-lang/composer"]
+   :ledger "resources/works.edn"}]
  :itonami.blueprint/status :public-oss}

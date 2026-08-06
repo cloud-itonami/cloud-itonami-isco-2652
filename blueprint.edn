@@ -7,5 +7,30 @@
  :itonami.blueprint/governor :music-governor
  :itonami.blueprint/robotics true
  :itonami.blueprint/required-technologies [:robotics :identity :forms :dmn :bpmn :audit-ledger]
- :itonami.blueprint/craft-libraries ["kotoba-lang/ongaku"]
+ ;; ISCO-08 2652 は Musicians, Singers *and Composers* を1職業として束ねている。
+ ;; 以前ここは "kotoba-lang/ongaku"（既製 BGM の選定とライセンス gate）1本だけを
+ ;; 宣言していて、作曲の技芸——人が書く経路（kami-ongaku-*, ADR-2607121400）と
+ ;; 生成する経路（composer / ai.gftd.ongakuka.*, ADR-2607031510）——が
+ ;; どちらも職能に接続されていなかった。両方とも 2026-07 に landed 済み。
+ :itonami.blueprint/craft-libraries ["kotoba-lang/ongaku"
+                                     "kotoba-lang/kami-ongaku-notation"
+                                     "kotoba-lang/kami-ongaku-sequencer"
+                                     "kotoba-lang/kami-ongaku-project"
+                                     "kotoba-lang/kami-ongaku-plugin-host"
+                                     "kotoba-lang/kami-ongaku-sampler"
+                                     "kotoba-lang/composer"]
+ ;; 職能は1つだが商売は2つ。ISCO を割らずに -ka を割るのは、isco-2651
+ ;; （painters/sculptors/cartoonists）に対して mangaka だけが立っているのと同じ形。
+ ;; jsic-3914 は単数の :business-layer を使っているが、ここは実際に複数なので
+ ;; 複数形の key にしてある（2026-08-06 時点でどちらの key にも consumer は無い）。
+ :itonami.blueprint/business-layers
+ [{:repo "cloud-itonami/ongakuka"
+   :scope "既製 BGM カタログの選定とライセンス運用。原資は他人の音源で、原盤権は持たない"
+   :craft ["kotoba-lang/ongaku"]}
+  {:repo "cloud-itonami/sakkyokuka"
+   :scope "受注制作。原盤権・著作権・出版権を自分が持ち、権利と納品物を定めて渡す"
+   :craft ["kotoba-lang/kami-ongaku-notation"
+           "kotoba-lang/kami-ongaku-sequencer"
+           "kotoba-lang/kami-ongaku-project"
+           "kotoba-lang/composer"]}]
  :itonami.blueprint/status :public-oss}

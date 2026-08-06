@@ -129,6 +129,20 @@ license-policy gate is [`ongaku.policy`](https://github.com/kotoba-lang/ongaku)
   store の track レコードから採る**ので、呼び出し側が「原盤権を持っている」と
   自己申告することはできない（`commission-gate-test` がこれを実際に試す）。
   台帳の側は [`cloud-itonami/sakkyokuka`](https://github.com/cloud-itonami/sakkyokuka)。
+- `store/register-catalog-track!` — ongaku カタログ資産を track として登録し、
+  **ライセンスから何を渡せるか**（`ongaku.holdings`）と**手元に何が実在するか**
+  （`:work/provenance :licensed` = 音声 1 本）を登録時に確定させる。
+
+  | 資産 | 渡せる | 実在する |
+  |---|---|---|
+  | DOVA-SYNDROME | **なし**（使用許諾であってサブライセンスではない） | 音声のみ |
+  | CC BY 4.0 | 非独占 `:sync` のみ（独占は原理的に不可） | 音声のみ |
+  | 未知 / 未記載 | **なし**（fail-closed） | 音声のみ |
+  | path B 自前生成 | 資産の宣言どおり（表からは導けない） | 宣言どおり |
+
+  導出を**登録時の明示的な 1 回**にしてあるのは意図的で、`track->work` の既定を
+  fail-closed のまま保つため。実行時に黙って導出すると gate が静かに開く方向へ
+  倒れる。`store/why-not-grantable` が拒否の理由（根拠・確認日・出典つき）を返す。
 - `src/music_practice/actor.cljc` — the StateGraph; committed license
   records carry the track's credit text and render-only flag.
 

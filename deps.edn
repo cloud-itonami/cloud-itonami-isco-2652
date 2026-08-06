@@ -10,7 +10,7 @@
         ;; どちらも判定は craft 側。hard reject と人間承認の振り分けだけが
         ;; この職能の判断（music-practice.governor）。
         io.github.kotoba-lang/ongaku
-        {:git/sha "cb88622101057f49e8380ba6b7dab6723d02f964"}}
+        {:git/sha "b027912fb06c074d5fbb90765956e934f0d73738"}}
  :aliases
  {
   ;; clj-kondo from deps (no binary), errors fail CI. Added because this repo

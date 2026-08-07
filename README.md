@@ -118,6 +118,7 @@ license-policy gate is [`ongaku.policy`](https://github.com/kotoba-lang/ongaku)
 
   | 問題 | 処分 | なぜ |
   |---|---|---|
+  | `:rights-not-determined` | **hold** | まだ誰も決めていない。断るのではなく確定作業が残っている |
   | `:not-held` | **hold** | 持っていない権利は署名しても自分のものにならない |
   | `:exclusive-conflict` | **hold** | 既に渡した独占は署名で取り戻せない |
   | 構造不備 (`:missing-id` 等) | **hold** | 受注レコードが壊れている。作り直させる |
@@ -143,6 +144,13 @@ license-policy gate is [`ongaku.policy`](https://github.com/kotoba-lang/ongaku)
   導出を**登録時の明示的な 1 回**にしてあるのは意図的で、`track->work` の既定を
   fail-closed のまま保つため。実行時に黙って導出すると gate が静かに開く方向へ
   倒れる。`store/why-not-grantable` が拒否の理由（根拠・確認日・出典つき）を返す。
+
+  **「まだ決めていない」と「決めた結果ゼロ」は区別する。** `:work/held-rights`
+  が `[]` なのと、キー自体が無いのは別物 —— 前者は仕様どおり（DOVA 資産は本当に
+  渡せるものが無い）なので受注を断る、後者は確定作業が残っている。値としては
+  どちらも「渡せない」に見えるが**やることが違う**ので、`rights-determined?` で
+  分けて `:rights-not-determined` を返す。`ongaku.holdings` が未知のライセンスを
+  「制限が無い」と読み替えないのと同じ区別を store 層でも立てている。
 - `src/music_practice/actor.cljc` — the StateGraph; committed license
   records carry the track's credit text and render-only flag.
 

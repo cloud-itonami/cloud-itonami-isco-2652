@@ -119,3 +119,41 @@
     (is (= [] (:grantable e)))
     (is (seq (:reason e)))
     (is (string? (:source-url e)))))
+
+;; --- 「まだ決めていない」と「決めた結果ゼロ」は別物 ------------------------------
+
+(deftest an-undetermined-track-is-not-the-same-as-nothing-grantable
+  (testing "register-track! で直接入れた track は権利確定を通っていない"
+    (let [s (-> (store/mem-store)
+                (store/register-track! (dissoc dova-asset :work/held-rights)))
+          v (governor/check (req "dova-12420-10deg"
+                                 {:grants [(rights/right {:kind :sync :exclusive? false})]})
+                            {} ok-proposal s)]
+      (is (:hard? v) "確定していないものを署名で通せはしない")
+      (is (some #(= :rights-not-determined (:rule %)) (:violations v)))
+      (is (not-any? #(= :not-held (:rule %)) (:violations v))
+          ":not-held に化けてはいけない —— 決めた結果ゼロ、と読めてしまう")))
+  (testing "register-catalog-track! を通した DOVA 資産は :not-held（確定済み・渡せない）"
+    (let [s (store/register-catalog-track! (store/mem-store) dova-asset)
+          v (governor/check (req "dova-12420-10deg"
+                                 {:grants [(rights/right {:kind :sync :exclusive? false})]})
+                            {} ok-proposal s)]
+      (is (:hard? v))
+      (is (some #(= :not-held (:rule %)) (:violations v)))
+      (is (not-any? #(= :rights-not-determined (:rule %)) (:violations v))))))
+
+(deftest rights-determined?-distinguishes-empty-from-absent
+  (is (false? (governor/rights-determined? {:asset/id "x"})))
+  (is (true?  (governor/rights-determined? {:asset/id "x" :work/held-rights []})))
+  (is (true?  (governor/rights-determined?
+               {:asset/id "x" :work/held-rights [(rights/right {:kind :sync})]}))))
+
+(deftest an-undetermined-track-without-a-commission-is-unaffected
+  (testing "受注が付いていない従来のライセンス要求は権利確定を要求しない"
+    (let [s (-> (store/mem-store)
+                (store/register-track! (dissoc dova-asset :work/held-rights)))
+          v (governor/check {:track-id "dova-12420-10deg" :op :license-track
+                             :channel-id "demo" :usage-context :youtube-background}
+                            {} ok-proposal s)]
+      (is (:ok? v))
+      (is (empty? (:commission-problems v))))))

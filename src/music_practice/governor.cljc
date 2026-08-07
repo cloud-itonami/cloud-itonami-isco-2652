@@ -22,6 +22,10 @@
        している、既発の独占譲渡と衝突している、あるいは受注レコード自体が
        壊れている。**人間の署名でも覆せない** — 持っていない権利は署名しても
        自分のものにならないし、既に渡した独占は署名で取り戻せない。
+    3b. 権利未確定 — track が `:work/held-rights` を一度も記録していない。
+       これは「渡せる権利が無い」ではなく「まだ誰も決めていない」で、
+       やることが違う（断るのではなく確定作業が残っている）。値としては
+       どちらも空に見えるので、`rights-determined?` で区別する。
   ESCALATION invariants (:escalate? true, ALWAYS human sign-off):
     4. any ongaku.policy error — raw public file exposure, AI-training
        use, Content ID/fingerprint registration, an unlicensed channel,
@@ -90,15 +94,40 @@
   [store track-id]
   (into [] (keep :right) (store/records-of store track-id)))
 
+(defn rights-determined?
+  "この track について**権利確定を一度でも通したか**。
+
+  `:work/held-rights` が `[]` であることと、キー自体が無いことは別物。前者は
+  『確定した結果、渡せるものが無かった』（DOVA 資産など）、後者は『まだ誰も
+  決めていない』。値としてはどちらも「渡せない」に見えるが、**運用上やることが
+  違う** —— 前者は仕様どおりなので受注を断る、後者は
+  `store/register-catalog-track!` を通すか権利を明示する作業が残っている。
+
+  `ongaku.holdings` が未知のライセンスを「制限が無い」と読み替えないのと同じ
+  区別を、store 層でも立てる。"
+  [track-record]
+  (contains? track-record :work/held-rights))
+
 (defn commission-problems
   "受注が付いていれば `ongaku.commission/validate` を回して問題を返す。
-  受注が無ければ `nil`。"
+  受注が無ければ `nil`。
+
+  権利確定を通っていない track は、craft 層へ渡す前にここで止める ——
+  そのまま渡すと `:not-held`（渡せる権利が無い）として出てしまい、
+  『まだ決めていない』が『決めた結果ゼロ』に化けるため。"
   [request track-record store]
   (when-let [c (:commission request)]
     (when track-record
-      (commission/validate
-       (commission/commission (assoc c :work (track->work track-record)))
-       (existing-grants store (:track-id request))))))
+      (if-not (rights-determined? track-record)
+        [{:problem/type :rights-not-determined
+          :problem/track-id (:track-id request)
+          :problem/message
+          (str "track " (:track-id request) " は権利確定を通っていない。"
+               "『渡せる権利が無い』のではなく『まだ誰も決めていない』 —— "
+               "store/register-catalog-track! を通すか :work/held-rights を明示すること")}]
+        (commission/validate
+         (commission/commission (assoc c :work (track->work track-record)))
+         (existing-grants store (:track-id request)))))))
 
 (defn check
   "Assess a proposal against `request`/`context`/`proposal` and a `store`
@@ -107,9 +136,9 @@
     :confidence n :hard? bool :escalate? bool}`.
 
   `request` に `:commission` があれば受注も検査する（`ongaku.commission`）。
-  問題は `hard-commission-problems` / `escalatable-commission-problems` で
-  hold と承認待ちに振り分ける。未知の問題種別は **hard 側に倒す** —— 分類を
-  知らない問題を黙って通すより、止めて分類を足させる方が安全側。"
+  問題は `escalatable-commission-problems` に載っているものだけが承認待ちで、
+  **それ以外は未知の種別も含めて hold** —— 分類を知らない問題を黙って通すより、
+  止めて分類を足させる方が安全側。"
   [request _context proposal store]
   (let [track-record (store/track store (:track-id request))
         base-hard (hard-violations {:request request :proposal proposal} track-record)

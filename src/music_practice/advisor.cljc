@@ -16,7 +16,7 @@
   LLM parse failures always yield `:confidence 0.0` (never fabricate
   confidence), which forces the governor to escalate/hold."
   (:require [clojure.edn :as edn]
-            [clojure.string :as str]))
+            [kotoba.lang.text :as str]))
 
 (defprotocol Advisor
   (-advise [advisor store request] "request -> proposal map"))

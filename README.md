@@ -94,16 +94,16 @@ license-policy gate is [`ongaku.policy`](https://github.com/kotoba-lang/ongaku)
                                            +-> :hold               (:hard? true)
 ```
 
-- `src/music_practice/store.cljc` — `Store` protocol + `MemStore`:
+- `src/music_practice/store.kotoba` — `Store` protocol + `MemStore`:
   registered catalog tracks (each track map IS an ongaku catalog asset with
   its license policy flags), committed records, an append-only audit ledger.
-- `src/music_practice/advisor.cljc` — `Advisor` protocol; `mock-advisor`
+- `src/music_practice/advisor.kotoba` — `Advisor` protocol; `mock-advisor`
   (deterministic, default) proposes a music operation from a request;
   `llm-advisor` wraps a `langchain.model/ChatModel` — either way the advisor
   only ever produces a `:propose`-effect proposal, and LLM parse failures
   always yield `confidence 0.0` (forces escalation, never fabricated
   confidence).
-- `src/music_practice/governor.cljc` — `MusicGovernor/check`: a pure
+- `src/music_practice/governor.kotoba` — `MusicGovernor/check`: a pure
   function, wired as its own `:govern` node. Hard invariants (unregistered
   track, a proposal whose `:effect` isn't `:propose`) always route to
   `:hold`. Escalation invariants (any `ongaku.policy` error — raw public
@@ -151,7 +151,7 @@ license-policy gate is [`ongaku.policy`](https://github.com/kotoba-lang/ongaku)
   どちらも「渡せない」に見えるが**やることが違う**ので、`rights-determined?` で
   分けて `:rights-not-determined` を返す。`ongaku.holdings` が未知のライセンスを
   「制限が無い」と読み替えないのと同じ区別を store 層でも立てている。
-- `src/music_practice/actor.cljc` — the StateGraph; committed license
+- `src/music_practice/actor.kotoba` — the StateGraph; committed license
   records carry the track's credit text and render-only flag.
 
 Run the tests:

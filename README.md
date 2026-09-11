@@ -157,7 +157,7 @@ license-policy gate is [`ongaku.policy`](https://github.com/kotoba-lang/ongaku)
 Run the tests:
 
 ```bash
-clojure -M:test
+kbb -M:test
 ```
 
 See [`docs/business-model.md`](docs/business-model.md) and

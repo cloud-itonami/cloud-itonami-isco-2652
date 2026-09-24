@@ -1,0 +1,33 @@
+;; What this vertical's robot physically does, declared for
+;; kotoba.robotics.process (kotoba-lang/robotics). `kbb -M:physics` runs it.
+;;
+;; README "Robotics premise": a studio automation robot performs physical
+;; console and instrument setup, recording-session capture and equipment
+;; handling for musicians and singers (ISCO 2652). Its physical work is lifting
+;; instruments onto stands and microphones onto booms, and rolling amplifier
+;; flight cases between the store room and the live room.
+;;
+;; Every number without a cited source is marked `estimate` in its :basis.
+;; Replacing an estimate with a sourced value is this bot's growth work.
+{:physics/schema "itonami.physical-ai.spec.v1"
+ :repo "cloud-itonami/cloud-itonami-isco-2652"
+ :cases
+ [{:id :instrument-onto-stand
+   :kind :manipulator
+   :procedure "arm lifts an instrument (or a microphone with shock mount) from its case and sets it on a stand"
+   :params {:l1-m 0.50 :l2-m 0.45 :m1-kg 5.0 :m2-kg 3.5
+            :from [0.60 0.05] :to [0.35 0.70] :duration-s 3.0 :steps 500}
+   :sweep {:param :payload-kg :values [0.5 1.5 3.5 5.0 8.0]}
+   :quantity :peak-tau1-nm
+   :limit {:max 60.0 :basis "estimate: continuous shoulder torque of a light collaborative arm (~5 kg payload class) at this reach"}
+   :boundary {:lo 0.1 :hi 30.0}}
+  {:id :amp-flight-case-to-live-room
+   :kind :transport
+   :procedure "robot rolls an amplifier flight case from the store room to the live room"
+   :params {:mass-kg 50.0 :distance-m 30.0 :v-max-mps 1.0 :a-max-mps2 0.6
+            :brake-decel-mps2 0.8 :drive-force-n 60.0 :crr 0.02
+            :cog-height-m 0.60 :support-half-length-m 0.30}
+   :sweep {:param :payload-kg :values [10.0 30.0 50.0 80.0 120.0]}
+   :quantity :cycle-time-s
+   :limit {:max 40.0 :basis "estimate: a store-to-live-room move short enough to fit a changeover between takes"}
+   :boundary {:lo 1.0 :hi 400.0}}]}

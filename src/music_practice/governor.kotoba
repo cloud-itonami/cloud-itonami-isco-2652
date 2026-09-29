@@ -4,7 +4,7 @@
   `:govern` node in `music-practice.actor`'s StateGraph, downstream of
   `:advise` — the Advisor has no notion of catalog provenance or license
   policy, so this MUST be a separate system able to reject a proposal
-  (itonami actor pattern, per ADR-2607011000 / CLAUDE.md Actors section).
+  (itonami actor pattern, per ADR-2607011000 / AGENTS.md Actors section).
 
   The license-policy core is NOT bespoke: it is `ongaku.policy` from the
   kotoba-lang `ongaku` craft lib (ADR-2607023000) — the same gate the

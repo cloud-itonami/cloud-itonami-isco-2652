@@ -4,7 +4,7 @@
   StateGraph — `MemStore` is the default, deterministic, zero-dep backend; a
   Datomic/kotoba-server-backed implementation can be swapped in without
   touching the actor or governor (itonami actor pattern, per ADR-2607011000 /
-  CLAUDE.md Actors section).
+  AGENTS.md Actors section).
 
   Domain:
 

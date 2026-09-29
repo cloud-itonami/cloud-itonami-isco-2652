@@ -1,6 +1,6 @@
 (ns music-practice.actor
   "MusicOpsActor — the ISCO-08 2652 independent musician/composer actor as a
-  `langgraph.graph/state-graph` (per ADR-2607011000 / CLAUDE.md Actors
+  `langgraph.graph/state-graph` (per ADR-2607011000 / AGENTS.md Actors
   section). One graph run = one music-practice operation request (intake →
   advise → govern → decide → commit/hold, with a human-approval interrupt for
   escalated proposals). No infinite internal loop; checkpointed per superstep

@@ -25,7 +25,9 @@
         ;; どちらも判定は craft 側。hard reject と人間承認の振り分けだけが
         ;; この職能の判断（music-practice.governor）。
         io.github.kotoba-lang/ongaku
-        {:git/sha "b027912fb06c074d5fbb90765956e934f0d73738"}}
+        {:git/url "https://github.com/kotoba-lang/kotoba.git"
+         :git/sha "4bf68e1a1b205674c70f386d59e430801fae3572"
+         :deps/root "lib/kotoba.ongaku"}}
  :aliases
  {
   ;; kbb -M:physics -> the physical-AI bot's measurement: runs physics.edn on
